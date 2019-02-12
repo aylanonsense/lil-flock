@@ -9,34 +9,56 @@ local MIMIC_SPEED_WEIGHT = 1.0
 local MIMIC_ROTATION_WEIGHT = 1.0
 local MOVE_TOWARDS_EACH_OTHER_WEIGHT = 1.0
 local RANDOMIZE_SPEED_WEIGHT = 1.0
-local RANDOMIZE_ROTATION_WEIGHT = .0
+local RANDOMIZE_ROTATION_WEIGHT = 1.0
 local KEEP_DISTANCE_WEIGHT = 1.0
+
+-- Game vars
+local timeToPeep
 
 -- Game objects
 local boids
 
 -- Sound effects
--- ...
+local pushSound
+local peepSounds
 
 -- Initializes the game
 function love.load()
-  -- Load sound effects
-  -- ...
+  -- Initialize game vars
+  timeToPeep = 1.00
 
-  -- Create 200 boids to start
+  -- Load sound effects
+  pushSound = love.audio.newSource('sfx/push.wav', 'static')
+  peepSounds = {
+    love.audio.newSource('sfx/peep1.wav', 'static'),
+    love.audio.newSource('sfx/peep2.wav', 'static'),
+    love.audio.newSource('sfx/peep3.wav', 'static'),
+    love.audio.newSource('sfx/peep4.wav', 'static')
+  }
+
+  -- Create 100 boids to start
   boids = {}
-  for i = 1, 200 do
+  for i = 1, 100 do
     createBoid(math.random(0, GAME_WIDTH), math.random(0, GAME_HEIGHT))
   end
 end
 
 -- Updates the game state
 function love.update(dt)
+  -- Make a random boid peep every so often
+  timeToPeep = timeToPeep - dt
+  if timeToPeep <= 0.00 then
+    timeToPeep = math.random(0.80, 2.50)
+    boids[math.random(1, #boids)].highlightTime = 0.30
+    love.audio.play(peepSounds[math.random(1, #peepSounds)]:clone())
+  end
+
   -- Get nearby boids to flock together
   if ENABLE_FLOCKING then
     for i = 1, #boids do
       local boid1 = boids[i]
       boid1.flockingDisabledTime = math.max(0.00, boid1.flockingDisabledTime - dt)
+      boid1.highlightTime = math.max(0.00, boid1.highlightTime - dt)
       for j = i + 1, #boids do
         local boid2 = boids[j]
         if boid1.flockingDisabledTime <= 0.00 and boid2.flockingDisabledTime <= 0.00 then
@@ -69,10 +91,10 @@ function love.update(dt)
             boid2.rotation = wrapAngle(boid2.rotation + boid2RotationChange)
             -- Move very close boids away from one another
             if squareDist < 25 then
-              boid1.speed = boundSpeed(boid1.speed + KEEP_DISTANCE_WEIGHT * 10 * dt)
-              boid2.speed = boundSpeed(boid2.speed - KEEP_DISTANCE_WEIGHT * 10 * dt)
-              boid1.rotation = wrapAngle(boid1.rotation + KEEP_DISTANCE_WEIGHT * 5 * dt)
-              boid2.rotation = wrapAngle(boid2.rotation - KEEP_DISTANCE_WEIGHT * 5 * dt)
+              boid1.speed = boundSpeed(boid1.speed + KEEP_DISTANCE_WEIGHT * 15 * dt)
+              boid2.speed = boundSpeed(boid2.speed - KEEP_DISTANCE_WEIGHT * 15 * dt)
+              boid1.rotation = wrapAngle(boid1.rotation + KEEP_DISTANCE_WEIGHT * 7 * dt)
+              boid2.rotation = wrapAngle(boid2.rotation - KEEP_DISTANCE_WEIGHT * 7 * dt)
             end
           end
         end
@@ -113,7 +135,14 @@ function love.draw()
 
   -- Draw the boids
   for _, boid in ipairs(boids) do
-    love.graphics.setColor(boid.color)
+    if boid.highlightTime > 0.00 then
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.circle('line', boid.x, boid.y, 6)
+      love.graphics.circle('line', boid.x, boid.y, 8)
+      love.graphics.circle('line', boid.x, boid.y, 10)
+    else
+      love.graphics.setColor(boid.color)
+    end
     love.graphics.polygon('fill', 
       boid.x + 5 * math.cos(boid.rotation), boid.y + 5 * math.sin(boid.rotation),
       boid.x + 4 * math.cos(boid.rotation + 0.8 * math.pi), boid.y + 4 * math.sin(boid.rotation + 0.8 * math.pi),
@@ -134,6 +163,7 @@ function love.mousepressed(x, y)
       boid.flockingDisabledTime = 0.5
     end
   end
+  love.audio.play(pushSound:clone())
 end
 
 -- Creates a new boid
@@ -146,6 +176,7 @@ function createBoid(x, y)
     speed = math.random(MIN_SPEED, MAX_SPEED),
     rotation = math.random(0, 2 * math.pi),
     sprite = math.floor(math.random(1, 3)),
+    highlightTime = 0.00,
     flockingDisabledTime = 0.00
   })
 end
