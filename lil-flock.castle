@@ -1,0 +1,6 @@
+---
+main: main.lua
+name: lil flock
+username: bridgs
+primaryColor: C0C0C0
+description: A lil flocking simulation. Y'know, boids?

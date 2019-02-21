@@ -1,2 +1,2 @@
 # lil-flock
-A tiny game where tiny things flock together.
+A lil flocking simulation. Y'know, boids?
