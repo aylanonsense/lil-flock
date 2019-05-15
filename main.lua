@@ -1,7 +1,6 @@
--- Constants
-local GAME_WIDTH = 200
-local GAME_HEIGHT = 200
-local RENDER_SCALE = 3
+-- Game constants
+local GAME_WIDTH = 192
+local GAME_HEIGHT = 192
 local ENABLE_FLOCKING = true
 local MIN_SPEED = 10
 local MAX_SPEED = 70
@@ -11,23 +10,29 @@ local MOVE_TOWARDS_EACH_OTHER_WEIGHT = 1.0
 local RANDOMIZE_SPEED_WEIGHT = 1.0
 local RANDOMIZE_ROTATION_WEIGHT = 1.0
 local KEEP_DISTANCE_WEIGHT = 1.0
+local BOID_COLORS = {
+  { 205 / 255, 34 / 255, 150 / 255 },
+  { 251 / 255, 134 / 255, 199 / 255 },
+  { 251 / 255, 189 / 255, 182 / 255 },
+  { 253 / 255, 217 / 255, 37 / 255 },
+  { 252 / 255, 147 / 255, 1 / 255 },
+  { 239 / 255, 59 / 255, 9 / 255 }
+}
 
--- Game vars
+-- Game variables
 local timeToPeep
-
--- Game objects
 local boids
 
--- Sound effects
+-- Assets
 local pushSound
 local peepSounds
 
 -- Initializes the game
 function love.load()
-  -- Initialize game vars
+  -- Initialize variables
   timeToPeep = 1.00
 
-  -- Load sound effects
+  -- Load assets
   pushSound = love.audio.newSource('sfx/push.wav', 'static')
   peepSounds = {
     love.audio.newSource('sfx/peep1.wav', 'static'),
@@ -36,7 +41,7 @@ function love.load()
     love.audio.newSource('sfx/peep4.wav', 'static')
   }
 
-  -- Create 100 boids to start
+  -- Create 100 boids
   boids = {}
   for i = 1, 100 do
     createBoid(math.random(0, GAME_WIDTH), math.random(0, GAME_HEIGHT))
@@ -50,7 +55,7 @@ function love.update(dt)
   if timeToPeep <= 0.00 then
     timeToPeep = math.random(0.80, 2.50)
     boids[math.random(1, #boids)].highlightTime = 0.30
-    love.audio.play(peepSounds[math.random(1, #peepSounds)]:clone())
+    -- love.audio.play(peepSounds[math.random(1, #peepSounds)]:clone())
   end
 
   -- Get nearby boids to flock together
@@ -126,17 +131,13 @@ end
 
 -- Renders the game
 function love.draw()
-  -- Resize the draw area
-  love.graphics.scale(RENDER_SCALE, RENDER_SCALE)
-
   -- Clear the screen
-  love.graphics.setColor(37 / 255, 2 / 255, 72 / 255, 1)
-  love.graphics.rectangle('fill', 0, 0, GAME_WIDTH, GAME_HEIGHT)
+  love.graphics.clear(157 / 255, 23 / 255, 107 / 255)
 
   -- Draw the boids
   for _, boid in ipairs(boids) do
     if boid.highlightTime > 0.00 then
-      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.setColor(251 / 255, 238 / 255, 230 / 255)
       love.graphics.circle('line', boid.x, boid.y, 6)
       love.graphics.circle('line', boid.x, boid.y, 8)
       love.graphics.circle('line', boid.x, boid.y, 10)
@@ -152,8 +153,8 @@ end
 
 -- Click to spawn more lil' boids
 function love.mousepressed(x, y)
-  local mouseX = x / RENDER_SCALE
-  local mouseY = y / RENDER_SCALE
+  local mouseX = x
+  local mouseY = y
   for _, boid in ipairs(boids) do
     local dist, dx, dy = calculateDistance(mouseX, mouseY, boid.x, boid.y)
     if dist < 35 then
@@ -168,11 +169,10 @@ end
 
 -- Creates a new boid
 function createBoid(x, y)
-  local color = { 1, math.random(), math.random(), 1 }
   table.insert(boids, {
     x = x,
     y = y,
-    color = color,
+    color = BOID_COLORS[math.random(1, #BOID_COLORS)],
     speed = math.random(MIN_SPEED, MAX_SPEED),
     rotation = math.random(0, 2 * math.pi),
     sprite = math.floor(math.random(1, 3)),
@@ -202,13 +202,4 @@ function calculateDistance(x1, y1, x2, y2)
   local dy = y2 - y1
   local dist = math.sqrt(dx * dx + dy * dy)
   return dist, dx, dy
-end
-
--- Draws a sprite from a sprite sheet image, spriteNum=1 is the upper-leftmost sprite
-function drawSprite(image, spriteNum, spriteWidth, spriteHeight, rotation, x, y)
-  local columns = math.floor(image:getWidth() / spriteWidth)
-  local col = (spriteNum - 1) % columns
-  local row = math.floor((spriteNum - 1) / columns)
-  local quad = love.graphics.newQuad(spriteWidth * col, spriteHeight * row, spriteWidth, spriteHeight, image:getDimensions())
-  love.graphics.draw(image, quad, x, y, rotation, 1, 1, spriteWidth / 2, spriteHeight / 2)
 end
