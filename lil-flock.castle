@@ -4,6 +4,6 @@ name: lil flock
 username: bridgs
 primaryColor: 9D176B
 coverImage: cover-image.png
-description: A lil flocking simulation. Y'know, boids?
+description: It's not much of a game, but a great opportunity to learn about flocking simulations! Try toying with the flocking constants to get your own unique boid behavior.
 dimensions: 192x192
 scaling: on
